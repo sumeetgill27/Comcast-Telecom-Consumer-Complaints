@@ -1,0 +1,330 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+com = pd.read_csv("Comcast_telecom_complaints_data.csv")
+com['DT'] = com['Date'] + " " + com['Time']
+
+com.isnull().sum()
+
+#Trend Chart Monthly and Daily
+com.dtypes
+
+# Function to convert the date format 
+def convert24(str1): 
+    if(len(str1.split(":")[0])==1 ): str1 = "0"+str1 
+# Checking if last two elements of time 
+# is AM and first two elements are 12 
+    print(str1) 
+    print(str1[:2]) 
+    if str1[-2:] == "AM" and str1[:2] == "12": 
+     return "00" + str1[2:-2] 
+# remove the AM elif str1[-2:] == "AM": 
+     return str1[:-2]
+# Checking if last two elements of time 
+# is PM and first two elements are 12 
+    elif str1[-2:] == "PM" and str1[:2] == "12": 
+     return str1[:-2] 
+    else: 
+# add 12 to hours and remove PM 
+
+     return str(int(str1[:2]) + 12) + str1[2:8] 
+
+for label, row in com.iterrows(): 
+
+ com.loc[label,'Time'] = convert24(row['Time']) 
+
+dt = com["Date"] + " " + com['Time']
+ 
+td1 = com['Date'].value_counts()
+#Output
+24-06-15    218
+23-06-15    190
+25-06-15     98
+26-06-15     55
+30-06-15     53
+
+05-02-15      7
+05-10-15      7
+04-05-15      6
+04-11-15      5
+05-03-15      5
+Name: Date, Length: 91, dtype: int64
+
+td1.plot(grid=True)
+#Graph attached
+ 
+ # Daily plot
+td1 = com['Date'].value_counts()
+td1.plot(grid=True)  
+
+#Monthly Plot
+com['Month'] = com['Date_month_year'].str[3:6]
+mon = com['Month'].value_counts()
+#Output
+Jun    1046
+Apr     375
+May     317
+Aug      67
+Dec      65
+Feb      59
+Jan      55
+Sep      55
+Oct      53
+Jul      49
+Mar      45
+Nov      38
+Name: Month, dtype: int64
+mon.plot(grid=True)
+#Attached
+
+#Categorising Type of Problems   
+cat = com.loc[:,('Customer Complaint','Status')]
+def findcat(int):
+    if 'internet' in int.casefold() and "data" not in int.casefold():
+        return 'Internet'
+    if 'bill' in int.casefold() or 'fee' in int.casefold() or 'charg' in int.casefold() or 'pric' in int.casefold() or 'pay' in int.casefold() or 'rate' in int.casefold():
+        return 'Money Related'
+    if int=='comcast':
+        return 'No Description'
+    if 'speed' in int.casefold() or 'slow' in int.casefold():
+        return 'Speed'
+    if 'service' in int.casefold() or 'fraud' in int.casefold():
+        return 'service'
+    if 'data' in int.casefold() or 'network' in int.casefold() or 'outage' in int.casefold() or 'switch' in int.casefold():
+        return 'Network'
+    elif 'comcast' in int.casefold():
+        return 'Company Issue'
+    else:
+        return 'Misc'
+      
+for i, j in cat.iterrows():
+    cat.loc[i,'Customer Complaint'] = findcat(j['Customer Complaint'])
+        
+category = cat['Customer Complaint'].value_counts()
+#Output
+Money             607
+Internet          516
+Company           384
+service           247
+Network           212
+Misc              173
+Speed              72
+No Description     13
+Name: Customer Complaint, dtype: int64
+
+category.plot(grid=True)
+
+#categorical variable with value as Open and Closed.
+def newcat(int1):
+    if int1=='Closed' or int1=='Solved':
+        return 'Close'
+    else:
+        return 'Open'
+    
+for a, b in cat.iterrows():
+    cat.loc[a,'Status'] = newcat(b['Status'])
+    
+cat['State'] = com.loc[:,'State']
+
+#state has the maximum complaints
+maxcomp = cat['State'].value_counts()
+#Output
+Georgia                 288
+Florida                 240
+California              220
+Illinois                164
+Tennessee               143
+Pennsylvania            130
+Michigan                115
+Washington               98
+Colorado                 80
+Maryland                 78
+New Jersey               75
+Texas                    71
+Massachusetts            61
+Virginia                 60
+Indiana                  59
+Oregon                   49
+Mississippi              39
+Minnesota                33
+Alabama                  26
+Utah                     22
+Arizona                  20
+South Carolina           18
+District Of Columbia     16
+New Mexico               15
+Louisiana                13
+Delaware                 12
+New Hampshire            12
+Connecticut              12
+West Virginia            11
+Kentucky                  7
+Arkansas                  6
+New York                  6
+Maine                     5
+Missouri                  4
+North Carolina            3
+Vermont                   3
+Ohio                      3
+Kansas                    2
+Iowa                      1
+District of Columbia      1
+Montana                   1
+Nevada                    1
+Rhode Island              1
+Name: State, dtype: int64
+
+#Complaints resolved and unresolved State-wise
+def stat(int2):
+    if 'Open' in int2:
+        return 1
+    else:
+        return 0
+    
+for a, b in cat.iterrows():
+    cat.loc[a,'Status'] = stat(b['Status'])
+
+cat.query('Status==1')['State']
+
+maxunres = cat.query('Status==1')['State'].value_counts()
+#Output Unresolved Complaints State-wise
+Georgia                 80
+California              61
+Tennessee               47
+Florida                 39
+Illinois                29
+Michigan                23
+Washington              23
+Colorado                22
+Texas                   22
+Pennsylvania            20
+New Jersey              19
+Mississippi             16
+Maryland                15
+Oregon                  13
+Massachusetts           11
+Virginia                11
+Alabama                  9
+Indiana                  9
+Arizona                  6
+Utah                     6
+New Mexico               4
+New Hampshire            4
+Minnesota                4
+Delaware                 4
+Connecticut              3
+West Virginia            3
+Kentucky                 3
+South Carolina           3
+Maine                    2
+District Of Columbia     2
+Missouri                 1
+Vermont                  1
+Kansas                   1
+Louisiana                1
+Name: State, dtype: int64
+
+#Output resolved Complaints State-wise
+Georgia                 208
+Florida                 201
+California              159
+Illinois                135
+Pennsylvania            110
+Tennessee                96
+Michigan                 92
+Washington               75
+Maryland                 63
+Colorado                 58
+New Jersey               56
+Massachusetts            50
+Indiana                  50
+Virginia                 49
+Texas                    49
+Oregon                   36
+Minnesota                29
+Mississippi              23
+Alabama                  17
+Utah                     16
+South Carolina           15
+Arizona                  14
+District Of Columbia     14
+Louisiana                12
+New Mexico               11
+Connecticut               9
+West Virginia             8
+New Hampshire             8
+Delaware                  8
+Arkansas                  6
+New York                  6
+Kentucky                  4
+Maine                     3
+North Carolina            3
+Missouri                  3
+Ohio                      3
+Vermont                   2
+District of Columbia      1
+Rhode Island              1
+Kansas                    1
+Nevada                    1
+Montana                   1
+Iowa                      1
+Name: State, dtype: int64
+
+#stacked bar chart
+from matplotlib import rc
+bar1 = maxunres.to_frame()
+bar1 = bar1.reset_index()
+bar1['Open'] = bar1['State']
+bar1['State'] = bar1['index']
+bar1 = bar1.drop(['index'], axis = 1)
+
+
+bar2 = maxres.to_frame()
+bar2 = bar2.reset_index()
+bar2['Close'] = bar2['State']
+bar2['State'] = bar2['index']
+bar2 = bar2.drop(['index'], axis = 1)
+
+
+bar = pd.merge(bar2, bar1, on="State", how = 'left')
+bar = bar.replace(np.NAN, 0, inplace=False)
+bar1plt = bar.iloc[:,1].values
+bar2plt = bar.iloc[:,2].values
+states = cat['State'].value_counts()
+states = states.reset_index()
+states['State'] = states['index']
+states = states.drop(['index'], axis = 1)
+states = states.iloc[:,0].values
+
+bars = np.add(bar1plt, bar2plt).tolist()
+r = list(range(43))
+p1open = plt.bar(r,bar1plt,width=.8)
+p1close = plt.bar(r, bar2plt, bottom=bar1plt,  color='#2d7f5e', edgecolor='white', width=.8)
+            
+plt.xticks(r, states, rotation=45, fontsize=5)
+plt.xlabel("States")
+plt.ylabel('Scores')
+plt.title('Open and Close Complaints State-Wise')
+plt.legend((p1open[0], p1close[0]), ('Open', 'Close'))
+#Graph Attached
+
+
+#percentage of complaints resolved till date, 
+#which were received through the Internet and customer care calls.
+
+cat['Received Via'] = com.loc[:,'Received Via']
+rec0 = cat.query('Status==0')['Received Via'].value_counts()
+rec0['Total'] = rec0.sum()
+rec1 = cat.query('Status==1')['Received Via'].value_counts()
+rec1['Total'] = rec1.sum()
+
+percentage = rec0['Total']/(rec0['Total'] + rec1['Total'])*100
+print(percentage)
+#Output
+76.75359712230215
+
+
+
+
+ 
+
